@@ -2,17 +2,22 @@
 
 [source,shell]
 ----
- go mod init github.com/GeraldLoeffler/go-cloud-native
- git init
+go mod init github.com/GeraldLoeffler/go-cloud-native
+git init
 ----
 
 == Open Tracing
 
 [source,shell]
 ----
- mkdir tracing; cd tracing
- touch trace.go # and code
- go build
- ./tracing
- echo "tracing" >> .gitignore
+docker run -d -p 5775:5775/udp -p 16686:16686 jaegertracing/all-in-one:latest
+----
+
+[source,shell]
+----
+mkdir tracing; cd tracing
+touch trace.go # and code
+go build
+./tracing
+echo "tracing" >> .gitignore
 ----
