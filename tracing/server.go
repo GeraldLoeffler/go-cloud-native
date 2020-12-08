@@ -2,10 +2,28 @@ package tracing
 
 import (
 	"context"
+	"fmt"
 	"log"
+
+	"github.com/opentracing/opentracing-go"
 )
 
-func SimulateServerReceivingRequestsAndSendingResponses(requestQueue chan *Request) {
+const (
+	tagKeyInput  = "input"
+	tagKeyOutput = "output"
+)
+
+func ServerMain(requestQueue chan *Request) {
+	log.Print("Initializing Open Tracing implementation")
+	tracer, closer := CreateOpenTracingTracer("tracing-server")
+	defer closer.Close()
+	opentracing.SetGlobalTracer(tracer) // required for integration with context API
+
+	log.Print("Server now accepting requests")
+	simulateServerReceivingRequestsAndSendingResponses(requestQueue)
+}
+
+func simulateServerReceivingRequestsAndSendingResponses(requestQueue chan *Request) {
 	for r := range requestQueue { // accept all requests until no more coming
 		go handleRequest(r)
 	}
@@ -14,29 +32,39 @@ func SimulateServerReceivingRequestsAndSendingResponses(requestQueue chan *Reque
 func handleRequest(r *Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	span, ctx := opentracing.StartSpanFromContext(ctx, "handleRequest")
+	defer span.Finish()
+	span.SetTag(tagKeyInput, r.input)
 
-	log.Print("Handling request")
-	defer log.Print("Handled request")
+	span.LogKV(logKeyEvent, logValEventBeforeCall, logKeyFunction, "processRequest")
+	output := processRequest(ctx, r.input)
+	span.LogKV(logKeyEvent, logValEventAfterReturn, logKeyFunction, "processRequest")
+	span.SetTag(tagKeyOutput, output)
 
-	input := r.input
-	output := processRequest(ctx, input)
 	r.output <- output
 }
 
 func processRequest(ctx context.Context, input int) (output int) {
-	ctx = context.WithValue(ctx, "input", input)
+	span, ctx := opentracing.StartSpanFromContext(ctx, "processRequest")
+	defer span.Finish()
+	span.SetTag(tagKeyInput, input)
 
-	log.Print("Processing request with input ", input)
-	defer func() { log.Print("Processed ", input, " to ", output) }()
-
+	span.LogKV(logKeyEvent, logValEventBeforeCall, logKeyFunction, "calculateOutput")
 	output = calculateOutput(ctx, input)
+	span.LogKV(logKeyEvent, logValEventAfterReturn, logKeyFunction, "calculateOutput")
+	span.SetTag(tagKeyOutput, output)
+
 	return
 }
 
 func calculateOutput(ctx context.Context, input int) (output int) {
-	log.Print("Calculating output for ", input)
-	defer func() { log.Print("Calculated output for ", input, " as ", output) }()
+	span, ctx := opentracing.StartSpanFromContext(ctx, "calculateOutput")
+	defer span.Finish()
+	span.SetTag(tagKeyInput, input)
 
 	output = input * 2
+	span.LogKV(logKeyEvent, "calculated", logKeyMessage, fmt.Sprintf("Calculated from input %v output %v", input, output))
+	span.SetTag(tagKeyOutput, output)
+
 	return
 }

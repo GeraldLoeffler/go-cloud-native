@@ -8,16 +8,34 @@ git init
 
 == Open Tracing
 
+See 
+
+- https://github.com/yurishkuro/opentracing-tutorial/tree/master/go
+- https://opentracing.io/guides/golang/
+- https://opentracing.io/specification/conventions/
+
+Note:
+
+- tags apply to the entire span, for its entire duration
+- logs are timestamped and characterize the span at/from this point in time
+
 [source,shell]
 ----
-docker run -d -p 5775:5775/udp -p 16686:16686 jaegertracing/all-in-one:latest
+docker run --rm --name jaeger -it \
+  -p 6831:6831/udp                \
+  -p 6832:6832/udp                \
+  -p 16686:16686                  \
+  jaegertracing/all-in-one:latest \
+  --log-level=debug
 ----
+
+Open http://localhost:16686/.
 
 [source,shell]
 ----
 mkdir tracing; cd tracing
-touch trace.go # and code
-go build
-./tracing
-echo "tracing" >> .gitignore
+# code
+go build ./...
+go run main/main.go
+echo "main/main" >> .gitignore
 ----

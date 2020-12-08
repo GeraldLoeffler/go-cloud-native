@@ -7,5 +7,5 @@ func main() {
 
 	go tracing.SimulateClientsSendingRequestsAndReceivingResponses(requestQueue)
 
-	tracing.SimulateServerReceivingRequestsAndSendingResponses(requestQueue)
+	tracing.ServerMain(requestQueue)
 }
