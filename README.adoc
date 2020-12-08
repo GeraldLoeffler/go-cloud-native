@@ -1,18 +1,18 @@
 = CNCF-related tech in Go
 
+[source,shell]
+----
+ go mod init github.com/GeraldLoeffler/go-cloud-native
+ git init
+----
+
 == Open Tracing
 
 [source,shell]
 ----
- cd git
- mkdir go-cloud-native; cd go-cloud-native
- go mod init github.com/GeraldLoeffler/go-cloud-native
- git init
  mkdir tracing; cd tracing
  touch trace.go # and code
  go build
  ./tracing
  echo "tracing" >> .gitignore
- cd ..
- git add .; git commit -m "initial commit"
 ----
