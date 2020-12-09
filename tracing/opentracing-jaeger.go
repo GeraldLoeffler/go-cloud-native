@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/opentracing/opentracing-go"
-	"github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
+	jaegerlog "github.com/uber/jaeger-client-go/log"
 )
 
 func CreateOpenTracingTracer(service string) (opentracing.Tracer, io.Closer) {
@@ -20,9 +20,15 @@ func CreateOpenTracingTracer(service string) (opentracing.Tracer, io.Closer) {
 			LogSpans: true,
 		},
 	}
-	tracer, closer, err := cfg.NewTracer(config.Logger(jaeger.StdLogger))
+	// override config from environment variables: https://github.com/jaegertracing/jaeger-client-go
+	cfg, err := cfg.FromEnv()
 	if err != nil {
-		log.Panic("Cannot init Jaeger ", err)
+		log.Panic("Couldn't override Jaeger configuration from environment", err)
+	}
+
+	tracer, closer, err := cfg.NewTracer(config.Logger(jaegerlog.StdLogger)) // this StdLogger has debug enabled
+	if err != nil {
+		log.Panic("Couldn't create Jaeger tracer", err)
 	}
 
 	return tracer, closer
